@@ -10,6 +10,7 @@ import './App.css'
 
 function App() {
   const [turnos, setTurnos] = useState(turnosIniciales)
+  const [menuAbierto, setMenuAbierto] = useState(false)
 
   function agregarTurno(turno) {
     setTurnos(prev => [...prev, { ...turno, id: Date.now(), estado: 'pendiente' }])
@@ -24,14 +25,20 @@ function App() {
       <div className="app">
         <nav className="navbar">
           <div className="nav-brand">✂️ BarberApp</div>
-          <div className="nav-links">
-            <NavLink to="/">Cliente</NavLink>
-            <NavLink to="/agenda">Agenda</NavLink>
-            <NavLink to="/equipo">Equipo</NavLink>
-            <NavLink to="/historial">Historial</NavLink>
-            <NavLink to="/asistente">Asistente IA</NavLink>
+
+          <button className="hamburger" onClick={() => setMenuAbierto(!menuAbierto)}>
+            {menuAbierto ? '✕' : '☰'}
+          </button>
+
+          <div className={`nav-links ${menuAbierto ? 'nav-open' : ''}`}>
+            <NavLink to="/" onClick={() => setMenuAbierto(false)}>Cliente</NavLink>
+            <NavLink to="/agenda" onClick={() => setMenuAbierto(false)}>Agenda</NavLink>
+            <NavLink to="/equipo" onClick={() => setMenuAbierto(false)}>Equipo</NavLink>
+            <NavLink to="/historial" onClick={() => setMenuAbierto(false)}>Historial</NavLink>
+            <NavLink to="/asistente" onClick={() => setMenuAbierto(false)}>Asistente IA</NavLink>
           </div>
         </nav>
+
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Cliente agregarTurno={agregarTurno} />} />

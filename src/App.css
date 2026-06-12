@@ -67,3 +67,56 @@ body {
   margin: 2rem auto;
   padding: 0 1.5rem;
 }
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    padding: 0 1rem;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 56px;
+    align-items: center;
+  }
+
+  .nav-brand {
+    flex: 1;
+    font-size: 17px;
+  }
+
+  .hamburger {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 10px;
+  }
+
+  .nav-links.nav-open {
+    display: flex;
+  }
+
+  .nav-links a {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+
+  .main-content {
+    margin: 1rem auto;
+    padding: 0 1rem;
+  }
+}

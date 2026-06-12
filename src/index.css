@@ -310,3 +310,41 @@ body {
   outline: none;
   border-color: #1a1a1a;
 }
+
+@media (max-width: 600px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .time-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .turno-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 0;
+  }
+
+  .turno-acciones {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .estado-select {
+    flex: 1;
+  }
+
+  .mensaje {
+    max-width: 90%;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .metric-value {
+    font-size: 22px;
+  }
+}
