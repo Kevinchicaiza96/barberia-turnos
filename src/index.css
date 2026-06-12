@@ -348,3 +348,58 @@ body {
     font-size: 22px;
   }
 }
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+
+.login-card {
+  background: white;
+  border-radius: 14px;
+  padding: 2rem;
+  border: 1px solid #ebebeb;
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-brand {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.login-title {
+  font-size: 15px;
+  color: #888;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-weight: 400;
+}
+
+.login-error {
+  color: #c62828;
+  font-size: 13px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.nav-logout {
+  background: none;
+  border: 1px solid #444;
+  color: #aaa;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: 'Segoe UI', sans-serif;
+  transition: all 0.15s;
+}
+
+.nav-logout:hover {
+  background: #2a2a2a;
+  color: white;
+}
