@@ -1,23 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
+import { collection, onSnapshot, addDoc, doc, updateDoc } from 'firebase/firestore'
+import { db } from './firebase'
 import Cliente from './pages/Cliente'
 import Agenda from './pages/Agenda'
 import Equipo from './pages/Equipo'
 import Historial from './pages/Historial'
 import Asistente from './pages/Asistente'
-import { turnosIniciales } from './data/datos'
 import './App.css'
 
 function App() {
-  const [turnos, setTurnos] = useState(turnosIniciales)
+  const [turnos, setTurnos] = useState([])
   const [menuAbierto, setMenuAbierto] = useState(false)
 
-  function agregarTurno(turno) {
-    setTurnos(prev => [...prev, { ...turno, id: Date.now(), estado: 'pendiente' }])
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'turnos'), snapshot => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+      setTurnos(data)
+    })
+    return () => unsub()
+  }, [])
+
+  async function agregarTurno(turno) {
+    await addDoc(collection(db, 'turnos'), { ...turno, estado: 'pendiente' })
   }
 
-  function actualizarEstado(id, estado) {
-    setTurnos(prev => prev.map(t => t.id === id ? { ...t, estado } : t))
+  async function actualizarEstado(id, estado) {
+    await updateDoc(doc(db, 'turnos', id), { estado })
   }
 
   return (
