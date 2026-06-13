@@ -5,6 +5,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { db, auth } from './firebase'
 import Cliente from './pages/Cliente'
 import Agenda from './pages/Agenda'
+import Registro from './pages/Registro'
 import Equipo from './pages/Equipo'
 import Historial from './pages/Historial'
 import Asistente from './pages/Asistente'
@@ -63,6 +64,7 @@ function App() {
           <div className={`nav-links ${menuAbierto ? 'nav-open' : ''}`}>
             <NavLink to="/" onClick={() => setMenuAbierto(false)}>Cliente</NavLink>
             <NavLink to="/cancelar" onClick={() => setMenuAbierto(false)}>Cancelar</NavLink>
+            <NavLink to="/registro" onClick={() => setMenuAbierto(false)}>Registrarse</NavLink>
             {usuario && <>
               <NavLink to="/agenda" onClick={() => setMenuAbierto(false)}>Agenda</NavLink>
               <NavLink to="/equipo" onClick={() => setMenuAbierto(false)}>Equipo</NavLink>
@@ -87,6 +89,7 @@ function App() {
             <Route path="/historial" element={usuario ? <Historial turnos={turnos} /> : <Login />} />
             <Route path="/ingresos" element={usuario ? <Ingresos turnos={turnos} /> : <Login />} />
             <Route path="/asistente" element={usuario ? <Asistente /> : <Login />} />
+            <Route path="/registro" element={<Registro />} />
           </Routes>
         </main>
       </div>
