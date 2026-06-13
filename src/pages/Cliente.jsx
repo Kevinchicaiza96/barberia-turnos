@@ -147,7 +147,7 @@ function Cliente({ agregarTurno }) {
           <label>Tu nombre</label>
           <input
             type="text"
-            placeholder="Ej: Carlos Muñoz"
+            placeholder="Escribe tu nombre completo"
             value={nombre}
             onChange={e => setNombre(e.target.value)}
           />
