@@ -19,7 +19,6 @@ export default async function handler(req, res) {
 
   const snapshot = await db.collection('turnos')
     .where('fecha', '==', fechaMañana)
-    .where('estado', '!=', 'cancelado')
     .get()
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID
@@ -32,6 +31,7 @@ export default async function handler(req, res) {
   for (const doc of snapshot.docs) {
     const turno = doc.data()
     if (!turno.telefono) continue
+    if (turno.estado === 'cancelado') continue
 
     const mensaje = `✂️ *BarberApp* — Recordatorio de turno\n\nHola *${turno.nombre}*, te recordamos que tienes un turno mañana:\n\n📋 Servicio: ${turno.servicio}\n📅 Fecha: ${turno.fecha}\n🕐 Hora: ${turno.hora}\n\nSi necesitas cancelar responde con tu código de cancelación.`
 
