@@ -23,6 +23,7 @@ function esFestivo(fecha) {
 
 function Cliente({ agregarTurno }) {
   const [nombre, setNombre] = useState('')
+  const [telefono, setTelefono] = useState('')
   const [servicio, setServicio] = useState('')
   const [barbero, setBarbero] = useState('')
   const [fecha, setFecha] = useState('')
@@ -91,6 +92,7 @@ function Cliente({ agregarTurno }) {
   function resetForm() {
     setConfirmado(false)
     setNombre('')
+    setTelefono('')
     setHora('')
     setFecha('')
     setServicio('')
@@ -100,7 +102,7 @@ function Cliente({ agregarTurno }) {
   }
 
   async function reservar() {
-    if (!nombre || !servicio || !barbero || !fecha || !hora) {
+    if (!nombre || !telefono || !servicio || !barbero || !fecha || !hora) {
       alert('Por favor completa todos los campos')
       return
     }
@@ -108,6 +110,7 @@ function Cliente({ agregarTurno }) {
     const barberoObj = barberos.find(b => b.id === +barbero)
     const codigoGenerado = await agregarTurno({
       nombre,
+      telefono,
       servicio: servicioObj.nombre,
       barbero: barberoObj.nombre.split(' ')[0],
       fecha,
@@ -147,9 +150,19 @@ function Cliente({ agregarTurno }) {
           <label>Tu nombre</label>
           <input
             type="text"
-            placeholder="Escribe tu nombre completo"
+            placeholder="Ingresa tu nombre completo"
             value={nombre}
             onChange={e => setNombre(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Teléfono WhatsApp</label>
+          <input
+            type="tel"
+            placeholder="Ingresa tu número de WhatsApp"
+            value={telefono}
+            onChange={e => setTelefono(e.target.value)}
           />
         </div>
 

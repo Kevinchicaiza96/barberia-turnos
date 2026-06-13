@@ -14,6 +14,34 @@ function Agenda({ turnos, actualizarEstado }) {
   const pendientes = turnos.filter(t => t.estado === 'pendiente').length
   const enCurso = turnos.filter(t => t.estado === 'en curso').length
 
+  async function enviarRecordatorio(turno) {
+    if (!turno.telefono) {
+      alert('Este turno no tiene número de teléfono registrado')
+      return
+    }
+    try {
+      const res = await fetch('/api/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: turno.telefono,
+          nombre: turno.nombre,
+          servicio: turno.servicio,
+          fecha: turno.fecha,
+          hora: turno.hora,
+        })
+      })
+      const data = await res.json()
+      if (data.ok) {
+        alert(`✅ Recordatorio enviado a ${turno.nombre}`)
+      } else {
+        alert(`❌ Error: ${data.error}`)
+      }
+    } catch {
+      alert('Error al enviar el recordatorio')
+    }
+  }
+
   return (
     <div>
       <h1 className="page-title">Agenda de hoy</h1>
@@ -38,17 +66,22 @@ function Agenda({ turnos, actualizarEstado }) {
       </div>
 
       <div className="form-card">
+        {turnos.length === 0 && (
+          <p style={{ textAlign: 'center', color: '#aaa', padding: '2rem 0' }}>
+            No hay turnos registrados aún
+          </p>
+        )}
         {turnos.map(t => (
           <div key={t.id} className="turno-row">
             <div className="turno-info">
               <div className="avatar">{iniciales(t.nombre)}</div>
               <div>
                 <div className="turno-nombre">{t.nombre}</div>
-                <div className="turno-sub">{t.servicio} · {t.barbero}</div>
+                <div className="turno-sub">{t.servicio} · {t.barbero} · {t.hora}</div>
+                <div className="turno-sub">{t.fecha}</div>
               </div>
             </div>
             <div className="turno-acciones">
-              <span className="turno-hora">{t.hora}</span>
               <span className={`badge ${colores[t.estado]}`}>{t.estado}</span>
               <select
                 className="estado-select"
@@ -60,6 +93,9 @@ function Agenda({ turnos, actualizarEstado }) {
                 <option value="completado">Completado</option>
                 <option value="cancelado">Cancelado</option>
               </select>
+              <button className="btn-sm" onClick={() => enviarRecordatorio(t)}>
+                📱 WA
+              </button>
             </div>
           </div>
         ))}
