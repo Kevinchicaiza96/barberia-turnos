@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState } from 'react'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { servicios, barberos, generarSlots, slotsOcupados } from '../data/datos'
@@ -14,50 +14,48 @@ function Cliente({ agregarTurno }) {
   const [confirmado, setConfirmado] = useState(false)
   const [bloqueados, setBloqueados] = useState([])
 
-  useEffect(() => {
-    if (!barbero || !fecha || !servicio) {
+  async function handleCampo(campo, valor) {
+    const nuevoServicio = campo === 'servicio' ? valor : servicio
+    const nuevoBarbero = campo === 'barbero' ? valor : barbero
+    const nuevaFecha = campo === 'fecha' ? valor : fecha
+
+    if (campo === 'servicio') setServicio(valor)
+    if (campo === 'barbero') setBarbero(valor)
+    if (campo === 'fecha') setFecha(valor)
+    setHora('')
+
+    if (!nuevoServicio || !nuevoBarbero || !nuevaFecha) {
       setBloqueados([])
-      setHora('')
       return
     }
 
-    let activo = true
+    const snapshot = await getDocs(collection(db, 'turnos'))
+    const nombreBarbero = barberos.find(b => b.id === +nuevoBarbero)?.nombre.split(' ')[0]
+    const turnosDia = snapshot.docs
+      .map(d => d.data())
+      .filter(t =>
+        t.barbero === nombreBarbero &&
+        t.fecha === nuevaFecha &&
+        t.estado !== 'cancelado'
+      )
 
-    async function cargarOcupados() {
-      const snapshot = await getDocs(collection(db, 'turnos'))
-      const turnosDia = snapshot.docs
-        .map(d => d.data())
-        .filter(t =>
-          t.barbero === barberos.find(b => b.id === +barbero)?.nombre.split(' ')[0] &&
-          t.fecha === fecha &&
-          t.estado !== 'cancelado'
-        )
-
-      const ocupados = new Set()
-      for (const t of turnosDia) {
-        const servicioTurno = servicios.find(s => s.nombre === t.servicio)
-        const dur = servicioTurno?.duracion || 30
-        slotsOcupados(t.hora, dur, todosSlots).forEach(s => ocupados.add(s))
-      }
-
-      const durSeleccionada = servicios.find(s => s.id === +servicio)?.duracion || 30
-      const finalBloqueados = new Set(ocupados)
-      todosSlots.forEach(slot => {
-        const needed = slotsOcupados(slot, durSeleccionada, todosSlots)
-        if (needed.some(s => ocupados.has(s))) finalBloqueados.add(slot)
-        if (needed.length < Math.ceil(durSeleccionada / 30)) finalBloqueados.add(slot)
-      })
-
-      if (activo) {
-        setBloqueados([...finalBloqueados])
-        setHora('')
-      }
+    const ocupados = new Set()
+    for (const t of turnosDia) {
+      const servicioTurno = servicios.find(s => s.nombre === t.servicio)
+      const dur = servicioTurno?.duracion || 30
+      slotsOcupados(t.hora, dur, todosSlots).forEach(s => ocupados.add(s))
     }
 
-    cargarOcupados()
+    const durSeleccionada = servicios.find(s => s.id === +nuevoServicio)?.duracion || 30
+    const finalBloqueados = new Set(ocupados)
+    todosSlots.forEach(slot => {
+      const needed = slotsOcupados(slot, durSeleccionada, todosSlots)
+      if (needed.some(s => ocupados.has(s))) finalBloqueados.add(slot)
+      if (needed.length < Math.ceil(durSeleccionada / 30)) finalBloqueados.add(slot)
+    })
 
-    return () => { activo = false }
-  }, [barbero, fecha, servicio])
+    setBloqueados([...finalBloqueados])
+  }
 
   function resetForm() {
     setConfirmado(false)
@@ -66,6 +64,7 @@ function Cliente({ agregarTurno }) {
     setFecha('')
     setServicio('')
     setBarbero('')
+    setBloqueados([])
   }
 
   async function reservar() {
@@ -118,7 +117,7 @@ function Cliente({ agregarTurno }) {
 
         <div className="form-group">
           <label>Servicio</label>
-          <select value={servicio} onChange={e => setServicio(e.target.value)}>
+          <select value={servicio} onChange={e => handleCampo('servicio', e.target.value)}>
             <option value="">Selecciona un servicio</option>
             {servicios.map(s => (
               <option key={s.id} value={s.id}>
@@ -130,7 +129,7 @@ function Cliente({ agregarTurno }) {
 
         <div className="form-group">
           <label>Barbero</label>
-          <select value={barbero} onChange={e => setBarbero(e.target.value)}>
+          <select value={barbero} onChange={e => handleCampo('barbero', e.target.value)}>
             <option value="">Selecciona un barbero</option>
             {barberos.map(b => (
               <option key={b.id} value={b.id}>{b.nombre}</option>
@@ -144,7 +143,7 @@ function Cliente({ agregarTurno }) {
             type="date"
             value={fecha}
             min={new Date().toISOString().split('T')[0]}
-            onChange={e => setFecha(e.target.value)}
+            onChange={e => handleCampo('fecha', e.target.value)}
           />
         </div>
 
