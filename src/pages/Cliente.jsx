@@ -1,5 +1,9 @@
-﻿import { useState } from 'react'
-import { servicios, barberos, horasDisponibles } from '../data/datos'
+﻿import { useState, useEffect } from 'react'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '../firebase'
+import { servicios, barberos, generarSlots, slotsOcupados } from '../data/datos'
+
+const todosSlots = generarSlots()
 
 function Cliente({ agregarTurno }) {
   const [nombre, setNombre] = useState('')
@@ -8,26 +12,64 @@ function Cliente({ agregarTurno }) {
   const [fecha, setFecha] = useState('')
   const [hora, setHora] = useState('')
   const [confirmado, setConfirmado] = useState(false)
+  const [bloqueados, setBloqueados] = useState([])
 
-  const horasOcupadas = ['9:00', '10:00', '11:30']
+  useEffect(() => {
+    if (!barbero || !fecha || !servicio) {
+      setBloqueados([])
+      return
+    }
+    async function cargarOcupados() {
+      const snapshot = await getDocs(collection(db, 'turnos'))
+      const turnosDia = snapshot.docs
+        .map(d => d.data())
+        .filter(t => t.barbero === barberos.find(b => b.id === +barbero)?.nombre.split(' ')[0] && t.fecha === fecha && t.estado !== 'cancelado')
 
-  function reservar() {
+      const ocupados = new Set()
+      for (const t of turnosDia) {
+        const servicioTurno = servicios.find(s => s.nombre === t.servicio)
+        const dur = servicioTurno?.duracion || 30
+        slotsOcupados(t.hora, dur, todosSlots).forEach(s => ocupados.add(s))
+      }
+
+      // Bloquear slots insuficientes para el servicio seleccionado
+      const durSeleccionada = servicios.find(s => s.id === +servicio)?.duracion || 30
+      const finalBloqueados = new Set(ocupados)
+      todosSlots.forEach(slot => {
+        const needed = slotsOcupados(slot, durSeleccionada, todosSlots)
+        if (needed.some(s => ocupados.has(s))) finalBloqueados.add(slot)
+        if (needed.length < Math.ceil(durSeleccionada / 30)) finalBloqueados.add(slot)
+      })
+
+      setBloqueados([...finalBloqueados])
+      setHora('')
+    }
+    cargarOcupados()
+  }, [barbero, fecha, servicio])
+
+  function resetForm() {
+    setConfirmado(false)
+    setNombre('')
+    setHora('')
+    setFecha('')
+    setServicio('')
+    setBarbero('')
+  }
+
+  async function reservar() {
     if (!nombre || !servicio || !barbero || !fecha || !hora) {
       alert('Por favor completa todos los campos')
       return
     }
-
     const servicioObj = servicios.find(s => s.id === +servicio)
     const barberoObj = barberos.find(b => b.id === +barbero)
-
-    agregarTurno({
+    await agregarTurno({
       nombre,
       servicio: servicioObj.nombre,
       barbero: barberoObj.nombre.split(' ')[0],
       fecha,
       hora,
     })
-
     setConfirmado(true)
   }
 
@@ -41,14 +83,7 @@ function Cliente({ agregarTurno }) {
         <p><strong>Barbero:</strong> {barberos.find(b => b.id === +barbero)?.nombre}</p>
         <p><strong>Fecha:</strong> {fecha}</p>
         <p><strong>Hora:</strong> {hora}</p>
-        <button className="btn-primary" onClick={() => {
-          setConfirmado(false)
-          setNombre('')
-          setHora('')
-          setFecha('')
-          setServicio('')
-          setBarbero('')
-        }}>
+        <button className="btn-primary" onClick={resetForm}>
           Reservar otro turno
         </button>
       </div>
@@ -75,7 +110,7 @@ function Cliente({ agregarTurno }) {
             <option value="">Selecciona un servicio</option>
             {servicios.map(s => (
               <option key={s.id} value={s.id}>
-                {s.nombre} — ${s.precio.toLocaleString()}
+                {s.nombre} — ${s.precio.toLocaleString()} ({s.duracion} min)
               </option>
             ))}
           </select>
@@ -96,22 +131,32 @@ function Cliente({ agregarTurno }) {
           <input
             type="date"
             value={fecha}
+            min={new Date().toISOString().split('T')[0]}
             onChange={e => setFecha(e.target.value)}
           />
         </div>
 
         <div className="form-group">
-          <label>Hora disponible</label>
+          <label>
+            Hora disponible
+            {(!barbero || !fecha || !servicio) && (
+              <span style={{ color: '#aaa', fontWeight: 400 }}> — selecciona servicio, barbero y fecha primero</span>
+            )}
+          </label>
           <div className="time-grid">
-            {horasDisponibles.map(h => (
-              <button
-                key={h}
-                className={`time-slot ${horasOcupadas.includes(h) ? 'taken' : ''} ${hora === h ? 'selected' : ''}`}
-                onClick={() => !horasOcupadas.includes(h) && setHora(h)}
-              >
-                {h}
-              </button>
-            ))}
+            {todosSlots.map(h => {
+              const ocupado = bloqueados.includes(h)
+              return (
+                <button
+                  key={h}
+                  className={`time-slot ${ocupado ? 'taken' : ''} ${hora === h ? 'selected' : ''}`}
+                  onClick={() => !ocupado && setHora(h)}
+                  disabled={!barbero || !fecha || !servicio}
+                >
+                  {h}
+                </button>
+              )
+            })}
           </div>
         </div>
 
