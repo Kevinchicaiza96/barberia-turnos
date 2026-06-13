@@ -5,6 +5,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { db, auth } from './firebase'
 import Cliente from './pages/Cliente'
 import Agenda from './pages/Agenda'
+import Superadmin from './pages/Superadmin'
 import Registro from './pages/Registro'
 import Equipo from './pages/Equipo'
 import Historial from './pages/Historial'
@@ -64,7 +65,6 @@ function App() {
           <div className={`nav-links ${menuAbierto ? 'nav-open' : ''}`}>
             <NavLink to="/" onClick={() => setMenuAbierto(false)}>Cliente</NavLink>
             <NavLink to="/cancelar" onClick={() => setMenuAbierto(false)}>Cancelar</NavLink>
-            <NavLink to="/registro" onClick={() => setMenuAbierto(false)}>Registrarse</NavLink>
             {usuario && <>
               <NavLink to="/agenda" onClick={() => setMenuAbierto(false)}>Agenda</NavLink>
               <NavLink to="/equipo" onClick={() => setMenuAbierto(false)}>Equipo</NavLink>
@@ -73,14 +73,12 @@ function App() {
               <NavLink to="/asistente" onClick={() => setMenuAbierto(false)}>Asistente IA</NavLink>
               <button className="nav-logout" onClick={() => signOut(auth)}>Salir</button>
             </>}
-            {!usuario && (
-              <NavLink to="/admin" onClick={() => setMenuAbierto(false)}>Admin</NavLink>
-            )}
           </div>
         </nav>
 
         <main className="main-content">
           <Routes>
+            <Route path="/superadmin" element={usuario ? <Superadmin usuario={usuario} /> : <Login />} />
             <Route path="/" element={<Cliente agregarTurno={agregarTurno} barberiaId={BARBERIA_ID} />} />
             <Route path="/cancelar" element={<Cancelar barberiaId={BARBERIA_ID} />} />
             <Route path="/admin" element={usuario ? <Agenda turnos={turnos} actualizarEstado={actualizarEstado} /> : <Login />} />
