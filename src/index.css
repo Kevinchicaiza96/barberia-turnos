@@ -403,3 +403,33 @@ body {
   background: #2a2a2a;
   color: white;
 }
+
+.festivos-lista {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.festivos-titulo {
+  font-size: 12px;
+  color: #888;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.festivo-tag {
+  font-size: 12px;
+  background: #fff8e1;
+  color: #e65100;
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid #ffe0b2;
+}
+
+@media (max-width: 600px) {
+  .festivos-lista {
+    gap: 4px;
+  }
+}

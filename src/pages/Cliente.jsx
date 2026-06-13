@@ -175,6 +175,21 @@ function Cliente({ agregarTurno }) {
             min={new Date().toISOString().split('T')[0]}
             onChange={e => handleFecha(e.target.value)}
           />
+          <div className="festivos-lista">
+            <span className="festivos-titulo">📅 Próximos festivos:</span>
+            {festivos
+              .filter(f => f >= new Date().toISOString().split('T')[0])
+              .slice(0, 4)
+              .map(f => {
+                const nombreFecha = new Date(f + 'T00:00:00').toLocaleDateString('es-CO', {
+                  weekday: 'long', month: 'long', day: 'numeric'
+                })
+                return (
+                  <span key={f} className="festivo-tag">{nombreFecha}</span>
+                )
+              })
+            }
+          </div>
         </div>
 
         <div className="form-group">
