@@ -17,13 +17,21 @@ function Cliente({ agregarTurno }) {
   useEffect(() => {
     if (!barbero || !fecha || !servicio) {
       setBloqueados([])
+      setHora('')
       return
     }
+
+    let activo = true
+
     async function cargarOcupados() {
       const snapshot = await getDocs(collection(db, 'turnos'))
       const turnosDia = snapshot.docs
         .map(d => d.data())
-        .filter(t => t.barbero === barberos.find(b => b.id === +barbero)?.nombre.split(' ')[0] && t.fecha === fecha && t.estado !== 'cancelado')
+        .filter(t =>
+          t.barbero === barberos.find(b => b.id === +barbero)?.nombre.split(' ')[0] &&
+          t.fecha === fecha &&
+          t.estado !== 'cancelado'
+        )
 
       const ocupados = new Set()
       for (const t of turnosDia) {
@@ -32,7 +40,6 @@ function Cliente({ agregarTurno }) {
         slotsOcupados(t.hora, dur, todosSlots).forEach(s => ocupados.add(s))
       }
 
-      // Bloquear slots insuficientes para el servicio seleccionado
       const durSeleccionada = servicios.find(s => s.id === +servicio)?.duracion || 30
       const finalBloqueados = new Set(ocupados)
       todosSlots.forEach(slot => {
@@ -41,10 +48,15 @@ function Cliente({ agregarTurno }) {
         if (needed.length < Math.ceil(durSeleccionada / 30)) finalBloqueados.add(slot)
       })
 
-      setBloqueados([...finalBloqueados])
-      setHora('')
+      if (activo) {
+        setBloqueados([...finalBloqueados])
+        setHora('')
+      }
     }
+
     cargarOcupados()
+
+    return () => { activo = false }
   }, [barbero, fecha, servicio])
 
   function resetForm() {
