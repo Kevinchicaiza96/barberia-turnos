@@ -29,6 +29,7 @@ function Cliente({ agregarTurno }) {
   const [hora, setHora] = useState('')
   const [confirmado, setConfirmado] = useState(false)
   const [bloqueados, setBloqueados] = useState([])
+  const [codigo, setCodigo] = useState('')
 
   async function handleCampo(campo, valor) {
     const nuevoServicio = campo === 'servicio' ? valor : servicio
@@ -95,6 +96,7 @@ function Cliente({ agregarTurno }) {
     setServicio('')
     setBarbero('')
     setBloqueados([])
+    setCodigo('')
   }
 
   async function reservar() {
@@ -104,13 +106,14 @@ function Cliente({ agregarTurno }) {
     }
     const servicioObj = servicios.find(s => s.id === +servicio)
     const barberoObj = barberos.find(b => b.id === +barbero)
-    await agregarTurno({
+    const codigoGenerado = await agregarTurno({
       nombre,
       servicio: servicioObj.nombre,
       barbero: barberoObj.nombre.split(' ')[0],
       fecha,
       hora,
     })
+    setCodigo(codigoGenerado)
     setConfirmado(true)
   }
 
@@ -124,6 +127,11 @@ function Cliente({ agregarTurno }) {
         <p><strong>Barbero:</strong> {barberos.find(b => b.id === +barbero)?.nombre}</p>
         <p><strong>Fecha:</strong> {fecha}</p>
         <p><strong>Hora:</strong> {hora}</p>
+        <div className="codigo-box">
+          <p className="codigo-label">Tu código de cancelación</p>
+          <p className="codigo-valor">{codigo}</p>
+          <p className="codigo-hint">Guarda este código para cancelar tu turno si lo necesitas</p>
+        </div>
         <button className="btn-primary" onClick={resetForm}>
           Reservar otro turno
         </button>

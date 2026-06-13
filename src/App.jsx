@@ -9,6 +9,7 @@ import Equipo from './pages/Equipo'
 import Historial from './pages/Historial'
 import Asistente from './pages/Asistente'
 import Login from './pages/Login'
+import Cancelar from './pages/Cancelar'
 import './App.css'
 
 function App() {
@@ -34,7 +35,9 @@ function App() {
   }, [])
 
   async function agregarTurno(turno) {
-    await addDoc(collection(db, 'turnos'), { ...turno, estado: 'pendiente' })
+    const codigo = Math.random().toString(36).substring(2, 8).toUpperCase()
+    await addDoc(collection(db, 'turnos'), { ...turno, estado: 'pendiente', codigo })
+    return codigo
   }
 
   async function actualizarEstado(id, estado) {
@@ -55,6 +58,7 @@ function App() {
 
           <div className={`nav-links ${menuAbierto ? 'nav-open' : ''}`}>
             <NavLink to="/" onClick={() => setMenuAbierto(false)}>Cliente</NavLink>
+            <NavLink to="/cancelar" onClick={() => setMenuAbierto(false)}>Cancelar</NavLink>
             {usuario && <>
               <NavLink to="/agenda" onClick={() => setMenuAbierto(false)}>Agenda</NavLink>
               <NavLink to="/equipo" onClick={() => setMenuAbierto(false)}>Equipo</NavLink>
@@ -71,6 +75,7 @@ function App() {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Cliente agregarTurno={agregarTurno} />} />
+            <Route path="/cancelar" element={<Cancelar />} />
             <Route path="/admin" element={usuario ? <Agenda turnos={turnos} actualizarEstado={actualizarEstado} /> : <Login />} />
             <Route path="/agenda" element={usuario ? <Agenda turnos={turnos} actualizarEstado={actualizarEstado} /> : <Login />} />
             <Route path="/equipo" element={usuario ? <Equipo /> : <Login />} />

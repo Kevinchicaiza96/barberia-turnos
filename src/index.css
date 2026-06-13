@@ -433,3 +433,30 @@ body {
     gap: 4px;
   }
 }
+
+.codigo-box {
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1.2rem 0;
+  text-align: center;
+}
+
+.codigo-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.codigo-valor {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #1a1a1a;
+}
+
+.codigo-hint {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 6px;
+}
