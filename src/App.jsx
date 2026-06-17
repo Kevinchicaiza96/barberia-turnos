@@ -7,6 +7,7 @@ import Cliente from './pages/Cliente'
 import Agenda from './pages/Agenda'
 import Superadmin from './pages/Superadmin'
 import Registro from './pages/Registro'
+import Configuracion from './pages/Configuracion'
 import Equipo from './pages/Equipo'
 import Historial from './pages/Historial'
 import Asistente from './pages/Asistente'
@@ -35,6 +36,7 @@ function Layout({ children, usuario, menuAbierto, setMenuAbierto }) {
           <NavLink to="/" onClick={() => setMenuAbierto(false)}>Cliente</NavLink>
           <NavLink to="/cancelar" onClick={() => setMenuAbierto(false)}>Cancelar</NavLink>
           {usuario && <>
+            <NavLink to="/configuracion" onClick={() => setMenuAbierto(false)}>Config</NavLink>
             <NavLink to="/agenda" onClick={() => setMenuAbierto(false)}>Agenda</NavLink>
             <NavLink to="/equipo" onClick={() => setMenuAbierto(false)}>Equipo</NavLink>
             <NavLink to="/historial" onClick={() => setMenuAbierto(false)}>Historial</NavLink>
@@ -94,6 +96,7 @@ function App() {
           <Route path="/cancelar" element={<Cancelar barberiaId={BARBERIA_ID} />} />
           <Route path="/landing" element={<Landing />} />
           <Route path="/registro" element={<Registro />} />
+          <Route path="/configuracion" element={usuario ? <Configuracion barberiaId={BARBERIA_ID} /> : <Login />} />
           <Route path="/admin" element={usuario ? <Agenda turnos={turnos} actualizarEstado={actualizarEstado} /> : <Login />} />
           <Route path="/agenda" element={usuario ? <Agenda turnos={turnos} actualizarEstado={actualizarEstado} /> : <Login />} />
           <Route path="/equipo" element={usuario ? <Equipo barberiaId={BARBERIA_ID} /> : <Login />} />
