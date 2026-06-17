@@ -736,3 +736,33 @@ body {
   .precios-grid { flex-direction: column; align-items: center; }
   .precio-card { width: 100%; max-width: 340px; }
 }
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-box {
+  background: white;
+  border-radius: 14px;
+  padding: 2rem;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+.modal-mensaje {
+  font-size: 15px;
+  color: #1a1a1a;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}

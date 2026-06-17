@@ -1,7 +1,8 @@
 ﻿import { useState } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
-import { servicios, barberos, generarSlots, slotsOcupados } from '../data/datos'
+import { generarSlots, slotsOcupados } from '../data/datos'
+import { useDatos } from '../hooks/useDatos'
 
 const todosSlots = generarSlots()
 
@@ -21,7 +22,8 @@ function esFestivo(fecha) {
   return festivos.includes(fecha)
 }
 
-function Cliente({ agregarTurno }) {
+function Cliente({ agregarTurno, barberiaId }) {
+  const { servicios, barberos, cargando } = useDatos(barberiaId)
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
   const [servicio, setServicio] = useState('')
@@ -31,6 +33,7 @@ function Cliente({ agregarTurno }) {
   const [confirmado, setConfirmado] = useState(false)
   const [bloqueados, setBloqueados] = useState([])
   const [codigo, setCodigo] = useState('')
+  const [modal, setModal] = useState({ visible: false, mensaje: '' })
 
   async function handleCampo(campo, valor) {
     const nuevoServicio = campo === 'servicio' ? valor : servicio
@@ -47,15 +50,15 @@ function Cliente({ agregarTurno }) {
       return
     }
 
-    const snapshot = await getDocs(collection(db, 'turnos'))
-    const nombreBarbero = barberos.find(b => b.id === +nuevoBarbero)?.nombre.split(' ')[0]
+    const barberoObj = barberos.find(b => b.id === nuevoBarbero)
+    const q = query(collection(db, 'turnos'),
+      where('barbero', '==', barberoObj?.nombre.split(' ')[0]),
+      where('fecha', '==', nuevaFecha)
+    )
+    const snapshot = await getDocs(q)
     const turnosDia = snapshot.docs
       .map(d => d.data())
-      .filter(t =>
-        t.barbero === nombreBarbero &&
-        t.fecha === nuevaFecha &&
-        t.estado !== 'cancelado'
-      )
+      .filter(t => t.estado !== 'cancelado')
 
     const ocupados = new Set()
     for (const t of turnosDia) {
@@ -64,7 +67,7 @@ function Cliente({ agregarTurno }) {
       slotsOcupados(t.hora, dur, todosSlots).forEach(s => ocupados.add(s))
     }
 
-    const durSeleccionada = servicios.find(s => s.id === +nuevoServicio)?.duracion || 30
+    const durSeleccionada = servicios.find(s => s.id === nuevoServicio)?.duracion || 30
     const finalBloqueados = new Set(ocupados)
     todosSlots.forEach(slot => {
       const needed = slotsOcupados(slot, durSeleccionada, todosSlots)
@@ -79,11 +82,11 @@ function Cliente({ agregarTurno }) {
     const seleccionada = new Date(valor + 'T00:00:00')
     const diaSemana = seleccionada.getDay()
     if (diaSemana === 0) {
-      alert('La barbería no trabaja los domingos')
+      setModal({ visible: true, mensaje: '🚫 La barbería no trabaja los domingos. Por favor selecciona otro día.' })
       return
     }
     if (esFestivo(valor)) {
-      alert('Ese día es festivo, la barbería no trabaja')
+      setModal({ visible: true, mensaje: '🎉 Ese día es festivo en Colombia, la barbería no trabaja. Por favor selecciona otro día.' })
       return
     }
     handleCampo('fecha', valor)
@@ -106,8 +109,8 @@ function Cliente({ agregarTurno }) {
       alert('Por favor completa todos los campos')
       return
     }
-    const servicioObj = servicios.find(s => s.id === +servicio)
-    const barberoObj = barberos.find(b => b.id === +barbero)
+    const servicioObj = servicios.find(s => s.id === servicio)
+    const barberoObj = barberos.find(b => b.id === barbero)
     const codigoGenerado = await agregarTurno({
       nombre,
       telefono,
@@ -120,14 +123,16 @@ function Cliente({ agregarTurno }) {
     setConfirmado(true)
   }
 
+  if (cargando) return <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Cargando...</div>
+
   if (confirmado) {
     return (
       <div className="confirm-card">
         <div className="confirm-icon">✓</div>
         <h2>¡Turno confirmado!</h2>
         <p><strong>Cliente:</strong> {nombre}</p>
-        <p><strong>Servicio:</strong> {servicios.find(s => s.id === +servicio)?.nombre}</p>
-        <p><strong>Barbero:</strong> {barberos.find(b => b.id === +barbero)?.nombre}</p>
+        <p><strong>Servicio:</strong> {servicios.find(s => s.id === servicio)?.nombre}</p>
+        <p><strong>Barbero:</strong> {barberos.find(b => b.id === barbero)?.nombre}</p>
         <p><strong>Fecha:</strong> {fecha}</p>
         <p><strong>Hora:</strong> {hora}</p>
         <div className="codigo-box">
@@ -144,6 +149,17 @@ function Cliente({ agregarTurno }) {
 
   return (
     <div>
+      {modal.visible && (
+        <div className="modal-overlay" onClick={() => setModal({ visible: false, mensaje: '' })}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <p className="modal-mensaje">{modal.mensaje}</p>
+            <button className="btn-primary" onClick={() => setModal({ visible: false, mensaje: '' })}>
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1 className="page-title">Reserva tu turno</h1>
       <div className="form-card">
         <div className="form-group">
@@ -222,7 +238,13 @@ function Cliente({ agregarTurno }) {
           </label>
           <div className="time-grid">
             {todosSlots.map(h => {
-              const ocupado = bloqueados.includes(h)
+              const ahora = new Date()
+              const fechaHoy = ahora.toISOString().split('T')[0]
+              const horaActual = ahora.getHours() * 60 + ahora.getMinutes()
+              const [hh, mm] = h.split(':').map(Number)
+              const minutoSlot = hh * 60 + mm
+              const esPasado = fecha === fechaHoy && minutoSlot <= horaActual
+              const ocupado = bloqueados.includes(h) || esPasado
               return (
                 <button
                   key={h}
