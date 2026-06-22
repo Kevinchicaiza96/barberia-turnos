@@ -16,7 +16,9 @@ const BARBERIA_ID = 'QkrmM1YbG4LxlKSa3hHa'
 
 function Layout({ children, menuAbierto, setMenuAbierto }) {
   const location = useLocation()
-  const esLanding = location.pathname === '/landing' || location.pathname === '/dashboard'
+
+  const rutasSinLayout = ['/landing', '/dashboard']
+  const esLanding = rutasSinLayout.includes(location.pathname)
 
   if (esLanding) return <>{children}</>
 
@@ -24,19 +26,33 @@ function Layout({ children, menuAbierto, setMenuAbierto }) {
     <div className="app">
       <nav className="navbar">
         <div className="nav-brand">✂️ BarberApp</div>
-        <button className="hamburger" onClick={() => setMenuAbierto(!menuAbierto)}>
+
+        <button
+          className="hamburger"
+          onClick={() => setMenuAbierto(!menuAbierto)}
+        >
           {menuAbierto ? '✕' : '☰'}
         </button>
+
         <div className={`nav-links ${menuAbierto ? 'nav-open' : ''}`}>
-          <NavLink to="/" onClick={() => setMenuAbierto(false)}>Reservar</NavLink>
-          <NavLink to="/cancelar" onClick={() => setMenuAbierto(false)}>Cancelar</NavLink>
+          <NavLink to="/" onClick={() => setMenuAbierto(false)}>
+            Reservar
+          </NavLink>
+
+          <NavLink to="/cancelar" onClick={() => setMenuAbierto(false)}>
+            Cancelar
+          </NavLink>
         </div>
       </nav>
+
       <main className="main-content">
         {children}
       </main>
+
       <footer className="app-footer">
-        <a href="/admin" className="admin-link">Acceso admin</a>
+        <NavLink to="/admin" className="admin-link">
+          Acceso admin
+        </NavLink>
       </footer>
     </div>
   )
@@ -49,45 +65,156 @@ function App() {
   const [cargandoAuth, setCargandoAuth] = useState(true)
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, u => {
+    const unsub = onAuthStateChanged(auth, (u) => {
       setUsuario(u)
       setCargandoAuth(false)
     })
+
     return () => unsub()
   }, [])
 
   useEffect(() => {
-    const q = query(collection(db, 'turnos'), where('barberia_id', '==', BARBERIA_ID))
-    const unsub = onSnapshot(q, snapshot => {
-      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+    const q = query(
+      collection(db, 'turnos'),
+      where('barberia_id', '==', BARBERIA_ID)
+    )
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data()
+      }))
+
       setTurnos(data)
     })
+
     return () => unsub()
   }, [])
 
   async function agregarTurno(turno) {
-    const codigo = Math.random().toString(36).substring(2, 8).toUpperCase()
-    await addDoc(collection(db, 'turnos'), { ...turno, estado: 'pendiente', codigo, barberia_id: BARBERIA_ID })
+    const codigo = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase()
+
+    await addDoc(collection(db, 'turnos'), {
+      ...turno,
+      estado: 'pendiente',
+      codigo,
+      barberia_id: BARBERIA_ID
+    })
+
+    try {
+      const res = await fetch('/api/whatsapp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          to: '+573024317849',
+          nombre: 'Admin',
+          servicio: turno.servicio,
+          fecha: turno.fecha,
+          hora: turno.hora,
+          mensaje: `✂️ *Nueva reserva* en BarberApp
+
+👤 Cliente: ${turno.nombre}
+📱 Tel: ${turno.telefono}
+📋 Servicio: ${turno.servicio}
+💈 Barbero: ${turno.barbero}
+📅 Fecha: ${turno.fecha}
+🕐 Hora: ${turno.hora}`
+        })
+      })
+
+      if (!res.ok) {
+        console.error('Error enviando WhatsApp')
+      }
+    } catch (error) {
+      console.error('Error enviando notificación:', error)
+    }
+
     return codigo
   }
 
   async function actualizarEstado(id, estado) {
-    await updateDoc(doc(db, 'turnos', id), { estado })
+    await updateDoc(doc(db, 'turnos', id), {
+      estado
+    })
   }
 
-  if (cargandoAuth) return null
+  if (cargandoAuth) {
+    return <div>Cargando...</div>
+  }
 
   return (
     <BrowserRouter>
-      <Layout usuario={usuario} menuAbierto={menuAbierto} setMenuAbierto={setMenuAbierto}>
+      <Layout
+        menuAbierto={menuAbierto}
+        setMenuAbierto={setMenuAbierto}
+      >
         <Routes>
-          <Route path="/" element={usuario ? <Navigate to="/dashboard" /> : <Cliente agregarTurno={agregarTurno} barberiaId={BARBERIA_ID} />} />
-          <Route path="/cancelar" element={<Cancelar barberiaId={BARBERIA_ID} />} />
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/registro" element={<Registro />} />
-          <Route path="/admin" element={usuario ? <Navigate to="/dashboard" /> : <Login />} />
-          <Route path="/dashboard" element={usuario ? <Dashboard turnos={turnos} barberiaId={BARBERIA_ID} actualizarEstado={actualizarEstado} /> : <Login />} />
-          <Route path="/superadmin" element={usuario ? <Superadmin usuario={usuario} /> : <Login />} />
+          <Route
+            path="/"
+            element={
+              usuario
+                ? <Navigate to="/dashboard" replace />
+                : (
+                  <Cliente
+                    agregarTurno={agregarTurno}
+                    barberiaId={BARBERIA_ID}
+                  />
+                )
+            }
+          />
+
+          <Route
+            path="/cancelar"
+            element={<Cancelar barberiaId={BARBERIA_ID} />}
+          />
+
+          <Route
+            path="/landing"
+            element={<Landing />}
+          />
+
+          <Route
+            path="/registro"
+            element={<Registro />}
+          />
+
+          <Route
+            path="/admin"
+            element={
+              usuario
+                ? <Navigate to="/dashboard" replace />
+                : <Login />
+            }
+          />
+
+          <Route
+            path="/dashboard"
+            element={
+              usuario
+                ? (
+                  <Dashboard
+                    turnos={turnos}
+                    barberiaId={BARBERIA_ID}
+                    actualizarEstado={actualizarEstado}
+                  />
+                )
+                : <Navigate to="/admin" replace />
+            }
+          />
+
+          <Route
+            path="/superadmin"
+            element={
+              usuario
+                ? <Superadmin usuario={usuario} />
+                : <Navigate to="/admin" replace />
+            }
+          />
         </Routes>
       </Layout>
     </BrowserRouter>
