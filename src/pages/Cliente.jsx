@@ -24,8 +24,8 @@ function esFestivo(fecha) {
 
 function Cliente({ agregarTurno, barberiaId }) {
   const { servicios, barberos, cargando } = useDatos(barberiaId)
-  const [nombre, setNombre] = useState('')
-  const [telefono, setTelefono] = useState('')
+  const [nombre, setNombre] = useState(() => localStorage.getItem('cliente_nombre') || '')
+  const [telefono, setTelefono] = useState(() => localStorage.getItem('cliente_telefono') || '')
   const [servicio, setServicio] = useState('')
   const [barbero, setBarbero] = useState('')
   const [fecha, setFecha] = useState('')
@@ -94,15 +94,13 @@ function Cliente({ agregarTurno, barberiaId }) {
 
   function resetForm() {
     setConfirmado(false)
-    setNombre('')
-    setTelefono('')
     setHora('')
     setFecha('')
     setServicio('')
     setBarbero('')
     setBloqueados([])
     setCodigo('')
-  }
+}
 
   async function reservar() {
     if (!nombre || !telefono || !servicio || !barbero || !fecha || !hora) {
@@ -168,7 +166,10 @@ function Cliente({ agregarTurno, barberiaId }) {
             type="text"
             placeholder="Ingresa tu nombre completo"
             value={nombre}
-            onChange={e => setNombre(e.target.value)}
+            onChange={e => {
+              setNombre(e.target.value)
+              localStorage.setItem('cliente_nombre', e.target.value)
+            }}
           />
         </div>
 
@@ -178,7 +179,10 @@ function Cliente({ agregarTurno, barberiaId }) {
             type="tel"
             placeholder="Ingresa tu número de WhatsApp"
             value={telefono}
-            onChange={e => setTelefono(e.target.value)}
+            onChange={e => {
+              setTelefono(e.target.value)
+              localStorage.setItem('cliente_telefono'. e.target.value)
+            }}
           />
         </div>
 
