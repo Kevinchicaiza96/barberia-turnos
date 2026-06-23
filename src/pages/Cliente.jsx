@@ -181,7 +181,7 @@ function Cliente({ agregarTurno, barberiaId }) {
             value={telefono}
             onChange={e => {
               setTelefono(e.target.value)
-              localStorage.setItem('cliente_telefono'. e.target.value)
+              localStorage.setItem('cliente_telefono', e.target.value)
             }}
           />
         </div>
