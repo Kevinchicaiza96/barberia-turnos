@@ -2,12 +2,16 @@ import { useState } from 'react'
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useDatos } from '../hooks/useDatos'
+import { generarSlots } from '../data/datos'
+
+const todosSlots = generarSlots()
 
 function Configuracion({ barberiaId }) {
-  const { servicios, barberos } = useDatos(barberiaId)
+  const { servicios, barberos, bloqueos } = useDatos(barberiaId)
 
   const [nuevoServicio, setNuevoServicio] = useState({ nombre: '', precio: '', duracion: '' })
   const [nuevoBarbero, setNuevoBarbero] = useState({ nombre: '', horario: '' })
+  const [nuevoBloqueo, setNuevoBloqueo] = useState({ barbero: '', fecha: '', hora: '' })
   const [editandoServicio, setEditandoServicio] = useState(null)
   const [editandoBarbero, setEditandoBarbero] = useState(null)
   const [tab, setTab] = useState('servicios')
@@ -69,17 +73,30 @@ function Configuracion({ barberiaId }) {
     setEditandoBarbero(null)
   }
 
+  async function agregarBloqueo() {
+    if (!nuevoBloqueo.barbero || !nuevoBloqueo.fecha || !nuevoBloqueo.hora) {
+      alert('Completa todos los campos')
+      return
+    }
+    await addDoc(collection(db, 'bloqueos'), {
+      ...nuevoBloqueo,
+      barberia_id: barberiaId,
+    })
+    setNuevoBloqueo({ barbero: '', fecha: '', hora: '' })
+  }
+
+  async function eliminarBloqueo(id) {
+    await deleteDoc(doc(db, 'bloqueos', id))
+  }
+
   return (
     <div>
       <h1 className="page-title">Configuración</h1>
 
       <div className="config-tabs">
-        <button className={`config-tab ${tab === 'servicios' ? 'active' : ''}`} onClick={() => setTab('servicios')}>
-          Servicios
-        </button>
-        <button className={`config-tab ${tab === 'barberos' ? 'active' : ''}`} onClick={() => setTab('barberos')}>
-          Barberos
-        </button>
+        <button className={`config-tab ${tab === 'servicios' ? 'active' : ''}`} onClick={() => setTab('servicios')}>Servicios</button>
+        <button className={`config-tab ${tab === 'barberos' ? 'active' : ''}`} onClick={() => setTab('barberos')}>Barberos</button>
+        <button className={`config-tab ${tab === 'bloqueos' ? 'active' : ''}`} onClick={() => setTab('bloqueos')}>Bloqueos</button>
       </div>
 
       {tab === 'servicios' && (
@@ -109,9 +126,9 @@ function Configuracion({ barberiaId }) {
               <div key={s.id} className="turno-row">
                 {editandoServicio?.id === s.id ? (
                   <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '8px', alignItems: 'center' }}>
-                    <input className="form-group input" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }} value={editandoServicio.nombre} onChange={e => setEditandoServicio({ ...editandoServicio, nombre: e.target.value })} />
-                    <input className="form-group input" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }} type="number" value={editandoServicio.precio} onChange={e => setEditandoServicio({ ...editandoServicio, precio: e.target.value })} />
-                    <input className="form-group input" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }} type="number" value={editandoServicio.duracion} onChange={e => setEditandoServicio({ ...editandoServicio, duracion: e.target.value })} />
+                    <input style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }} value={editandoServicio.nombre} onChange={e => setEditandoServicio({ ...editandoServicio, nombre: e.target.value })} />
+                    <input style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }} type="number" value={editandoServicio.precio} onChange={e => setEditandoServicio({ ...editandoServicio, precio: e.target.value })} />
+                    <input style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }} type="number" value={editandoServicio.duracion} onChange={e => setEditandoServicio({ ...editandoServicio, duracion: e.target.value })} />
                   </div>
                 ) : (
                   <div className="turno-info">
@@ -186,6 +203,52 @@ function Configuracion({ barberiaId }) {
                     </>
                   )}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === 'bloqueos' && (
+        <div>
+          <div className="form-card" style={{ marginBottom: '1rem' }}>
+            <p style={{ fontSize: '14px', fontWeight: 500, marginBottom: '1rem' }}>Bloquear horario</p>
+            <div className="form-group">
+              <label>Barbero</label>
+              <select value={nuevoBloqueo.barbero} onChange={e => setNuevoBloqueo({ ...nuevoBloqueo, barbero: e.target.value })}>
+                <option value="">Selecciona un barbero</option>
+                {barberos.map(b => (
+                  <option key={b.id} value={b.nombre.split(' ')[0]}>{b.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Fecha</label>
+              <input type="date" value={nuevoBloqueo.fecha} min={new Date().toISOString().split('T')[0]} onChange={e => setNuevoBloqueo({ ...nuevoBloqueo, fecha: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Hora</label>
+              <select value={nuevoBloqueo.hora} onChange={e => setNuevoBloqueo({ ...nuevoBloqueo, hora: e.target.value })}>
+                <option value="">Selecciona una hora</option>
+                {todosSlots.map(h => <option key={h} value={h}>{h}</option>)}
+              </select>
+            </div>
+            <button className="btn-primary" onClick={agregarBloqueo}>Bloquear horario</button>
+          </div>
+
+          <div className="form-card">
+            {bloqueos.length === 0 && <p style={{ color: '#aaa', textAlign: 'center', padding: '1rem' }}>No hay horarios bloqueados</p>}
+            {bloqueos.map(b => (
+              <div key={b.id} className="turno-row">
+                <div className="turno-info">
+                  <div>
+                    <div className="turno-nombre">{b.barbero}</div>
+                    <div className="turno-sub">{b.fecha} · {b.hora}</div>
+                  </div>
+                </div>
+                <button className="btn-sm" style={{ color: '#c62828' }} onClick={() => eliminarBloqueo(b.id)}>
+                  Desbloquear
+                </button>
               </div>
             ))}
           </div>
