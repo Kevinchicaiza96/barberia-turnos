@@ -23,7 +23,7 @@ function esFestivo(fecha) {
 }
 
 function Cliente({ agregarTurno, barberiaId }) {
-  const { servicios, barberos, cargando } = useDatos(barberiaId)
+  const { servicios, barberos, bloqueos, cargando } = useDatos(barberiaId)
   const [nombre, setNombre] = useState(() => localStorage.getItem('cliente_nombre') || '')
   const [telefono, setTelefono] = useState(() => localStorage.getItem('cliente_telefono') || '')
   const [servicio, setServicio] = useState('')
@@ -74,6 +74,10 @@ function Cliente({ agregarTurno, barberiaId }) {
       if (needed.some(s => ocupados.has(s))) finalBloqueados.add(slot)
       if (needed.length < Math.ceil(durSeleccionada / 30)) finalBloqueados.add(slot)
     })
+
+    bloqueos
+    .filter(b => b.barbero === barberoObj?.nombre.split(' ')[0] && b.fecha === nuevaFecha)
+    .forEach(b => finalBloqueados.add(b.hora))
 
     setBloqueados([...finalBloqueados])
   }
